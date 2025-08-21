@@ -1,0 +1,125 @@
+Script started on 2025-08-21 07:34:21-04:00 [COMMAND="set -x && pytest tests/" TERM="screen.xterm-256color" TTY="/dev/pty5" COLUMNS="121" LINES="40"]
++ pytest tests/
+..............................F............................FF.........................F.                          [100%]
+======================================================= FAILURES ========================================================
+_________________________ TestPthFileCreationComprehensive.test_pth_creation_user_site_fallback _________________________
+self = <tests.test_pth_comprehensive.TestPthFileCreationComprehensive testMethod=test_pth_creation_user_site_fallback>
+    def test_pth_creation_user_site_fallback(self):
+        """Test fallback to user site-packages when system not writable."""
+        system_dir = self.create_temp_dir()
+        user_dir = self.create_temp_dir()
+    
+        # Make system directory not writable
+        os.chmod(system_dir, 0o444)
+    
+        with patch('site.getsitepackages', return_value=[system_dir]):
+            with patch('site.getusersitepackages', return_value=user_dir):
+                with patch('os.path.exists') as mock_exists:
+                    with patch('os.access') as mock_access:
+                        # System dir exists but not writable, user dir doesn't exist yet
+                        mock_exists.side_effect = lambda path: path == system_dir
+                        mock_access.return_value = False
+    
+                        result = create_psutil_pth()
+    
+                        expected_path = os.path.join(user_dir, 'psutil.pth')
+                        self.assertEqual(result, expected_path)
+>                       self.assertTrue(os.path.exists(expected_path))
+E                       AssertionError: False is not true
+tests/test_pth_comprehensive.py:103: AssertionError
+------------------------------------------------- Captured stdout call --------------------------------------------------
+✅ Created psutil.pth: /tmp/tmpn0sz8j04/psutil.pth
+📦 'import psutil' will now use psutil_cygwin transparently
+_______________________ TestErrorRecoveryAndRobustness.test_corrupted_proc_filesystem_simulation ________________________
+self = <tests.test_stress.TestErrorRecoveryAndRobustness testMethod=test_corrupted_proc_filesystem_simulation>
+    def test_corrupted_proc_filesystem_simulation(self):
+        """Test behavior with simulated corrupted /proc files."""
+        corrupted_scenarios = [
+            # Binary data
+            (b'\x00\x01\x02\x03\x04\x05', "binary data"),
+            # Truncated files
+            ("cpu  100 2", "truncated"),
+            # Random text
+            ("".join(random.choices(string.ascii_letters, k=1000)), "random text"),
+            # Very long lines
+            ("cpu  " + " ".join(str(random.randint(0, 999999)) for _ in range(1000)), "very long"),
+            # Mixed encodings (Latin-1)
+            ("cpu  100 200 300 \xff\xfe\xfd", "mixed encoding"),
+        ]
+    
+        for corrupted_data, description in corrupted_scenarios:
+            with self.subTest(scenario=description):
+                with patch('builtins.open', mock_open(read_data=corrupted_data)):
+                    try:
+                        # Functions should not crash on corrupted data
+>                       times = psutil.cpu_times()
+tests/test_stress.py:347: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+    def cpu_times() -> CPUTimes:
+        """Get system CPU times"""
+        try:
+            with open('/proc/stat', 'r') as f:
+                line = f.readline().strip()
+>               if line.startswith('cpu '):
+E               TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+psutil_cygwin/core.py:314: TypeError
+_____________________________ TestErrorRecoveryAndRobustness.test_intermittent_file_errors ______________________________
+self = <tests.test_stress.TestErrorRecoveryAndRobustness testMethod=test_intermittent_file_errors>
+mock_open = <MagicMock name='open' id='123145283373232'>
+    @patch('builtins.open')
+    def test_intermittent_file_errors(self, mock_open):
+        """Test handling of intermittent file access errors."""
+        # Simulate intermittent failures
+        call_count = 0
+    
+        def intermittent_failure(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            if call_count % 3 == 0:  # Fail every 3rd call
+                raise OSError("Intermittent failure")
+            return mock_open.return_value
+    
+        mock_open.side_effect = intermittent_failure
+        mock_open.return_value.read.return_value = "cpu  100 200 300 400\n"
+    
+        # Functions should handle intermittent failures gracefully
+        success_count = 0
+        failure_count = 0
+    
+        for _ in range(10):
+            try:
+                times = psutil.cpu_times()
+                if times.user > 0:  # Valid data
+                    success_count += 1
+                else:  # Default/fallback data
+                    failure_count += 1
+            except OSError:
+                failure_count += 1
+    
+        # Should have some successes and handle failures gracefully
+>       self.assertGreater(success_count, 0)
+E       AssertionError: 0 not greater than 0
+tests/test_stress.py:324: AssertionError
+______________________________ TestSystemFunctionsComprehensive.test_cpu_times_edge_cases _______________________________
+self = <tests.test_unit_comprehensive.TestSystemFunctionsComprehensive testMethod=test_cpu_times_edge_cases>
+mock_sysconf = <MagicMock name='sysconf' id='123145282010560'>
+mock_file = <MagicMock name='open' spec='builtin_function_or_method' id='123145282662464'>
+    @patch('builtins.open', new_callable=mock_open)
+    @patch('os.sysconf')
+    def test_cpu_times_edge_cases(self, mock_sysconf, mock_file):
+        """Test CPU times parsing with various edge cases."""
+        # Normal case
+        mock_file.return_value.read.return_value = "cpu  100 200 300 400 500 600 700 800\n"
+        mock_sysconf.return_value = 100
+        times = psutil.cpu_times()
+>       self.assertEqual(times.user, 1.0)
+E       AssertionError: 0 != 1.0
+tests/test_unit_comprehensive.py:152: AssertionError
+================================================ short test summary info ================================================
+FAILED tests/test_pth_comprehensive.py::TestPthFileCreationComprehensive::test_pth_creation_user_site_fallback - AssertionError: False is not true
+FAILED tests/test_stress.py::TestErrorRecoveryAndRobustness::test_corrupted_proc_filesystem_simulation - TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+FAILED tests/test_stress.py::TestErrorRecoveryAndRobustness::test_intermittent_file_errors - AssertionError: 0 not greater than 0
+FAILED tests/test_unit_comprehensive.py::TestSystemFunctionsComprehensive::test_cpu_times_edge_cases - AssertionError: 0 != 1.0
+4 failed, 84 passed in 45.64s
+Script done on 2025-08-21 07:35:07-04:00 [COMMAND_EXIT_CODE="1"]
+
