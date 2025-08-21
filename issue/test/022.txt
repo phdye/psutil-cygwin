@@ -1,0 +1,102 @@
+Script started on 2025-08-21 19:47:27-04:00 [COMMAND="set -x && pytest tests" TERM="screen.xterm-256color" TTY="/dev/pty5" COLUMNS="121" LINES="40"]
++ pytest tests
+..............................F.......F...........................F.....................                          [100%]
+======================================================= FAILURES ========================================================
+_________________________ TestPthFileCreationComprehensive.test_pth_creation_user_site_fallback _________________________
+self = <tests.test_pth_comprehensive.TestPthFileCreationComprehensive testMethod=test_pth_creation_user_site_fallback>
+    def test_pth_creation_user_site_fallback(self):
+        """Test fallback to user site-packages when system not writable."""
+        system_dir = self.create_temp_dir()
+        user_dir = self.create_temp_dir()
+    
+        # Make system directory not writable
+        os.chmod(system_dir, 0o444)
+    
+        with patch('site.getsitepackages', return_value=[system_dir]):
+            with patch('site.getusersitepackages', return_value=user_dir):
+                with patch('os.path.exists') as mock_exists:
+                    with patch('os.access') as mock_access:
+                        # System dir exists but not writable, user dir exists after creation
+                        def exists_side_effect(path):
+                            return path == system_dir or path == user_dir
+    
+                        mock_exists.side_effect = exists_side_effect
+                        mock_access.return_value = False  # System dir not writable
+    
+                        result = create_psutil_pth()
+    
+                        expected_path = os.path.join(user_dir, 'psutil.pth')
+                        self.assertEqual(result, expected_path)
+>                       self.assertTrue(os.path.exists(expected_path))
+E                       AssertionError: False is not true
+tests/test_pth_comprehensive.py:106: AssertionError
+------------------------------------------------- Captured stdout call --------------------------------------------------
+✅ Created psutil.pth: /tmp/tmpsrt3pa3_/psutil.pth
+📦 'import psutil' will now use psutil_cygwin transparently
+______________________________ TestPthFileCreation.test_create_psutil_pth_fallback_to_user ______________________________
+self = <tests.test_pth_functionality.TestPthFileCreation testMethod=test_create_psutil_pth_fallback_to_user>
+mock_makedirs = <MagicMock name='makedirs' id='123145283900464'>
+mock_access = <MagicMock name='access' id='123145283560496'>
+mock_exists = <MagicMock name='exists' id='123145283576640'>
+mock_getusersitepackages = <MagicMock name='getusersitepackages' id='123145283613264'>
+mock_getsitepackages = <MagicMock name='getsitepackages' id='123145283625360'>
+    @patch('site.getsitepackages')
+    @patch('site.getusersitepackages')
+    @patch('os.path.exists')
+    @patch('os.access')
+    @patch('os.makedirs')
+    def test_create_psutil_pth_fallback_to_user(self, mock_makedirs, mock_access,
+                                               mock_exists, mock_getusersitepackages,
+                                               mock_getsitepackages):
+        """Test fallback to user site-packages when system site-packages not writable."""
+        user_site = os.path.join(self.temp_dir, 'user-site')
+        user_pth = os.path.join(user_site, 'psutil.pth')
+    
+        # Mock system site-packages not writable
+        mock_getsitepackages.return_value = ['/system/site-packages']
+        mock_getusersitepackages.return_value = user_site
+    
+        def exists_side_effect(path):
+            if path == '/system/site-packages':
+                return True
+            elif path == user_site:
+                return False  # Will be created
+            return False
+    
+        def access_side_effect(path, mode):
+            if path == '/system/site-packages':
+                return False  # Not writable
+            return True
+    
+        mock_exists.side_effect = exists_side_effect
+        mock_access.side_effect = access_side_effect
+    
+        with patch('builtins.open', mock_open()) as mock_file:
+            result = create_psutil_pth()
+    
+            # Should have created user site-packages directory
+            mock_makedirs.assert_called_once_with(user_site, exist_ok=True)
+    
+            # Should have created .pth file in user site-packages
+            mock_file.assert_called_once_with(user_pth, 'w')
+>           self.assertEqual(result, user_pth)
+E           AssertionError: None != '/tmp/tmpnaf2ldnb/user-site/psutil.pth'
+tests/test_pth_functionality.py:103: AssertionError
+__________________________________________ TestSystemFunctions.test_cpu_count ___________________________________________
+self = <tests.test_unit.TestSystemFunctions testMethod=test_cpu_count>
+mock_file = <MagicMock name='open' spec='builtin_function_or_method' id='123145282555760'>
+    @patch('builtins.open', new_callable=mock_open,
+           read_data="processor : 0\nprocessor : 1\n")
+    def test_cpu_count(self, mock_file):
+        """Test CPU count parsing."""
+        count = psutil.cpu_count()
+>       self.assertEqual(count, 2)
+E       AssertionError: 16 != 2
+tests/test_unit.py:77: AssertionError
+================================================ short test summary info ================================================
+FAILED tests/test_pth_comprehensive.py::TestPthFileCreationComprehensive::test_pth_creation_user_site_fallback - AssertionError: False is not true
+FAILED tests/test_pth_functionality.py::TestPthFileCreation::test_create_psutil_pth_fallback_to_user - AssertionError: None != '/tmp/tmpnaf2ldnb/user-site/psutil.pth'
+FAILED tests/test_unit.py::TestSystemFunctions::test_cpu_count - AssertionError: 16 != 2
+3 failed, 85 passed in 52.21s
+Script done on 2025-08-21 19:48:23-04:00 [COMMAND_EXIT_CODE="1"]
+
