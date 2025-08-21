@@ -1,0 +1,242 @@
+Script started on 2025-08-21 14:22:14-04:00 [COMMAND="set -x && pytest tests" TERM="screen.xterm-256color" TTY="/dev/pty5" COLUMNS="121" LINES="40"]
++ pytest tests
+..............................F........F.............F..F..F.......F..................F.                          [100%]
+======================================================= FAILURES ========================================================
+_________________________ TestPthFileCreationComprehensive.test_pth_creation_user_site_fallback _________________________
+self = <tests.test_pth_comprehensive.TestPthFileCreationComprehensive testMethod=test_pth_creation_user_site_fallback>
+    def test_pth_creation_user_site_fallback(self):
+        """Test fallback to user site-packages when system not writable."""
+        system_dir = self.create_temp_dir()
+        user_dir = self.create_temp_dir()
+    
+        # Make system directory not writable
+        os.chmod(system_dir, 0o444)
+    
+        with patch('site.getsitepackages', return_value=[system_dir]):
+            with patch('site.getusersitepackages', return_value=user_dir):
+                with patch('os.path.exists') as mock_exists:
+                    with patch('os.access') as mock_access:
+                        # System dir exists but not writable, user dir exists after creation
+                        def exists_side_effect(path):
+                            return path == system_dir or path == user_dir
+    
+                        mock_exists.side_effect = exists_side_effect
+                        mock_access.return_value = False  # System dir not writable
+    
+                        result = create_psutil_pth()
+    
+                        expected_path = os.path.join(user_dir, 'psutil.pth')
+                        self.assertEqual(result, expected_path)
+>                       self.assertTrue(os.path.exists(expected_path))
+E                       AssertionError: False is not true
+tests/test_pth_comprehensive.py:106: AssertionError
+------------------------------------------------- Captured stdout call --------------------------------------------------
+✅ Created psutil.pth: /tmp/tmpop17ehbv/psutil.pth
+📦 'import psutil' will now use psutil_cygwin transparently
+______________________________ TestPthFileCreation.test_create_psutil_pth_permission_error ______________________________
+self = <tests.test_pth_functionality.TestPthFileCreation testMethod=test_create_psutil_pth_permission_error>
+mock_open = <MagicMock name='open' id='123145283563584'>
+mock_getsitepackages = <MagicMock name='getsitepackages' id='123145283367600'>
+    @patch('site.getsitepackages')
+    @patch('builtins.open', side_effect=PermissionError("Permission denied"))
+    def test_create_psutil_pth_permission_error(self, mock_open, mock_getsitepackages):
+        """Test handling of permission errors during .pth file creation."""
+        mock_getsitepackages.return_value = [self.temp_dir]
+    
+        with patch('os.path.exists', return_value=True), \
+             patch('os.access', return_value=True):
+    
+            result = create_psutil_pth()
+    
+            # Should return None on permission error
+>           self.assertIsNone(result)
+E           AssertionError: '/tmp/tmp80l1ucjg/psutil.pth' is not None
+tests/test_pth_functionality.py:117: AssertionError
+------------------------------------------------- Captured stdout call --------------------------------------------------
+✅ Created psutil.pth: /tmp/tmp80l1ucjg/psutil.pth
+📦 'import psutil' will now use psutil_cygwin transparently
+_____________________________________ TestExtremeEdgeCases.test_extreme_cpu_values ______________________________________
+self = <tests.test_stress.TestExtremeEdgeCases testMethod=test_extreme_cpu_values>
+mock_file = <MagicMock name='open' spec='builtin_function_or_method' id='123145283761632'>
+    @patch('builtins.open', new_callable=mock_open)
+    def test_extreme_cpu_values(self, mock_file):
+        """Test CPU parsing with extreme values."""
+        extreme_cases = [
+            # Very large numbers
+            "cpu  999999999999999999 888888888888888888 777777777777777777 666666666666666666",
+            # Maximum possible values
+            f"cpu  {2**63-1} {2**63-1} {2**63-1} {2**63-1}",
+            # Zero values
+            "cpu  0 0 0 0 0 0 0 0",
+            # Single huge value
+            "cpu  999999999999999999",
+            # Negative values (should be handled gracefully)
+            "cpu  -1 -2 -3 -4",
+            # Mixed positive/negative
+            "cpu  1000 -500 2000 -100",
+        ]
+    
+        with patch('os.sysconf', return_value=100):
+            for cpu_data in extreme_cases:
+                with self.subTest(cpu_data=cpu_data[:50]):
+                    mock_file.return_value.read.return_value = cpu_data + "\n"
+    
+                    try:
+                        times = psutil.cpu_times()
+                        self.assertIsInstance(times, psutil.CPUTimes)
+                        # Values should be reasonable after processing
+>                       self.assertGreaterEqual(times.user, 0)
+E                       AssertionError: -0.01 not greater than or equal to 0
+tests/test_stress.py:84: AssertionError
+During handling of the above exception, another exception occurred:
+self = <tests.test_stress.TestExtremeEdgeCases testMethod=test_extreme_cpu_values>
+mock_file = <MagicMock name='open' spec='builtin_function_or_method' id='123145283761632'>
+    @patch('builtins.open', new_callable=mock_open)
+    def test_extreme_cpu_values(self, mock_file):
+        """Test CPU parsing with extreme values."""
+        extreme_cases = [
+            # Very large numbers
+            "cpu  999999999999999999 888888888888888888 777777777777777777 666666666666666666",
+            # Maximum possible values
+            f"cpu  {2**63-1} {2**63-1} {2**63-1} {2**63-1}",
+            # Zero values
+            "cpu  0 0 0 0 0 0 0 0",
+            # Single huge value
+            "cpu  999999999999999999",
+            # Negative values (should be handled gracefully)
+            "cpu  -1 -2 -3 -4",
+            # Mixed positive/negative
+            "cpu  1000 -500 2000 -100",
+        ]
+    
+        with patch('os.sysconf', return_value=100):
+            for cpu_data in extreme_cases:
+                with self.subTest(cpu_data=cpu_data[:50]):
+                    mock_file.return_value.read.return_value = cpu_data + "\n"
+    
+                    try:
+                        times = psutil.cpu_times()
+                        self.assertIsInstance(times, psutil.CPUTimes)
+                        # Values should be reasonable after processing
+                        self.assertGreaterEqual(times.user, 0)
+                        self.assertGreaterEqual(times.system, 0)
+                        self.assertGreaterEqual(times.idle, 0)
+                    except Exception as e:
+                        # Should handle gracefully, not crash
+>                       self.assertIsInstance(e, (ValueError, OverflowError))
+E                       AssertionError: AssertionError('-0.01 not greater than or equal to 0') is not an instance of (<class 'ValueError'>, <class 'OverflowError'>)
+tests/test_stress.py:89: AssertionError
+____________________________________ TestStressConditions.test_high_frequency_calls _____________________________________
+self = <tests.test_stress.TestStressConditions testMethod=test_high_frequency_calls>
+    def test_high_frequency_calls(self):
+        """Test high-frequency function calls."""
+        if not Path("/proc").exists():
+            self.skipTest("Requires /proc filesystem")
+    
+        # Test rapid-fire calls to various functions
+        test_functions = [
+            psutil.cpu_count,
+            psutil.boot_time,
+            lambda: psutil.virtual_memory().total,
+            lambda: len(psutil.pids()),
+        ]
+    
+        for func in test_functions:
+            with self.subTest(func=func.__name__ if hasattr(func, '__name__') else str(func)):
+                start_time = time.time()
+    
+                # Rapid calls
+                for _ in range(1000):
+                    try:
+                        result = func()
+                        self.assertIsNotNone(result)
+                    except Exception as e:
+                        self.fail(f"Function {func} failed on rapid call: {e}")
+    
+                end_time = time.time()
+    
+                # Should complete in reasonable time
+                total_time = end_time - start_time
+>               self.assertLess(total_time, 30.0,
+                               f"1000 calls to {func} took {total_time:.2f}s")
+E               AssertionError: 73.16967558860779 not less than 30.0 : 1000 calls to <function cpu_count at 0x6ffffeffa5e0> took 73.17s
+tests/test_stress.py:225: AssertionError
+_______________________ TestErrorRecoveryAndRobustness.test_corrupted_proc_filesystem_simulation ________________________
+self = <tests.test_stress.TestErrorRecoveryAndRobustness testMethod=test_corrupted_proc_filesystem_simulation>
+    def test_corrupted_proc_filesystem_simulation(self):
+        """Test behavior with simulated corrupted /proc files."""
+        corrupted_scenarios = [
+            # Binary data
+            (b'\x00\x01\x02\x03\x04\x05', "binary data"),
+            # Truncated files
+            ("cpu  100 2", "truncated"),
+            # Random text
+            ("".join(random.choices(string.ascii_letters, k=1000)), "random text"),
+            # Very long lines
+            ("cpu  " + " ".join(str(random.randint(0, 999999)) for _ in range(1000)), "very long"),
+            # Mixed encodings (Latin-1)
+            ("cpu  100 200 300 \xff\xfe\xfd", "mixed encoding"),
+        ]
+    
+        for corrupted_data, description in corrupted_scenarios:
+            with self.subTest(scenario=description):
+                with patch('builtins.open', mock_open(read_data=corrupted_data)):
+                    try:
+                        # Functions should not crash on corrupted data
+                        times = psutil.cpu_times()
+>                       mem = psutil.virtual_memory()
+tests/test_stress.py:354: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+    def virtual_memory() -> VirtualMemory:
+        """Get virtual memory statistics"""
+        try:
+            with open('/proc/meminfo', 'r') as f:
+                meminfo = {}
+                for line in f:
+>                   if ':' in line:
+E                   TypeError: a bytes-like object is required, not 'str'
+psutil_cygwin/core.py:423: TypeError
+__________________________________________ TestSystemFunctions.test_cpu_times ___________________________________________
+self = <tests.test_unit.TestSystemFunctions testMethod=test_cpu_times>
+mock_sysconf = <MagicMock name='sysconf' id='123145283193680'>
+mock_file = <MagicMock name='open' spec='builtin_function_or_method' id='123145283044448'>
+    @patch('builtins.open', new_callable=mock_open,
+           read_data="cpu  100 200 300 400 500\n")
+    @patch('os.sysconf')
+    def test_cpu_times(self, mock_sysconf, mock_file):
+        """Test CPU times parsing."""
+        mock_sysconf.return_value = 100  # Clock ticks per second
+    
+        times = psutil.cpu_times()
+        self.assertIsInstance(times, psutil.CPUTimes)
+        self.assertEqual(times.user, 1.0)  # 100/100
+>       self.assertEqual(times.system, 3.0)  # 300/100
+E       AssertionError: 2.0 != 3.0
+tests/test_unit.py:60: AssertionError
+______________________________ TestSystemFunctionsComprehensive.test_cpu_times_edge_cases _______________________________
+self = <tests.test_unit_comprehensive.TestSystemFunctionsComprehensive testMethod=test_cpu_times_edge_cases>
+mock_sysconf = <MagicMock name='sysconf' id='123145283062032'>
+mock_file = <MagicMock name='open' spec='builtin_function_or_method' id='123145282569408'>
+    @patch('builtins.open', new_callable=mock_open)
+    @patch('os.sysconf')
+    def test_cpu_times_edge_cases(self, mock_sysconf, mock_file):
+        """Test CPU times parsing with various edge cases."""
+        # Normal case
+        mock_file.return_value.read.return_value = "cpu  100 200 300 400 500 600 700 800\n"
+        mock_sysconf.return_value = 100
+        times = psutil.cpu_times()
+        self.assertEqual(times.user, 1.0)
+>       self.assertEqual(times.system, 3.0)
+E       AssertionError: 2.0 != 3.0
+tests/test_unit_comprehensive.py:153: AssertionError
+================================================ short test summary info ================================================
+FAILED tests/test_pth_comprehensive.py::TestPthFileCreationComprehensive::test_pth_creation_user_site_fallback - AssertionError: False is not true
+FAILED tests/test_pth_functionality.py::TestPthFileCreation::test_create_psutil_pth_permission_error - AssertionError: '/tmp/tmp80l1ucjg/psutil.pth' is not None
+FAILED tests/test_stress.py::TestExtremeEdgeCases::test_extreme_cpu_values - AssertionError: AssertionError('-0.01 not greater than or equal to 0') is not an instance of (<class 'ValueError'>, ...
+FAILED tests/test_stress.py::TestStressConditions::test_high_frequency_calls - AssertionError: 73.16967558860779 not less than 30.0 : 1000 calls to <function cpu_count at 0x6ffffeffa5e0> took 73.17s
+FAILED tests/test_stress.py::TestErrorRecoveryAndRobustness::test_corrupted_proc_filesystem_simulation - TypeError: a bytes-like object is required, not 'str'
+FAILED tests/test_unit.py::TestSystemFunctions::test_cpu_times - AssertionError: 2.0 != 3.0
+FAILED tests/test_unit_comprehensive.py::TestSystemFunctionsComprehensive::test_cpu_times_edge_cases - AssertionError: 2.0 != 3.0
+7 failed, 81 passed in 117.85s (0:01:57)
+Script done on 2025-08-21 14:24:13-04:00 [COMMAND_EXIT_CODE="1"]
+
