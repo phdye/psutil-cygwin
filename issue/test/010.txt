@@ -1,0 +1,97 @@
+Issue 010: Tests skipped on Cygwin when they should run
+
+Current Status:
+- 3 tests skipped: 1 for "psutil not available", 2 for "Custom setuptools commands removed"
+- Running on Cygwin where psutil-cygwin should provide transparent import
+- Tests should NOT be skipped on the target platform
+
+Analysis:
+
+1. SKIP: "psutil not available (may not be installed)"
+   - Location: TestRealTransparentImport.test_transparent_import_basic_functionality() 
+   - Problem: Test tries to import psutil but fails
+   - Root Cause: .pth file not configured OR standard psutil not installed
+   - On Cygwin: This test SHOULD run since psutil-cygwin provides psutil
+
+2. SKIP: "Custom setuptools commands removed during modernization" (2 tests)
+   - Location: TestInstallationIntegration, TestCygwinDetection classes
+   - Problem: Tests were disabled during modernization 
+   - Root Cause: Tests referenced old setuptools commands that no longer exist
+   - Solution: Replace with modern equivalent tests
+
+Root Issues:
+
+A. Transparent Import Not Configured
+   - No psutil.pth file exists in site-packages
+   - psutil-cygwin-setup install not run after package installation
+   - Standard psutil may be installed instead
+
+B. Test Logic Issues  
+   - Test assumes transparent import is already working
+   - Doesn't help user understand how to fix the setup
+   - Skips instead of providing actionable feedback
+
+C. Missing Modern Tests
+   - Old setuptools command tests were disabled
+   - No replacement tests for modern installation approach
+   - Lost test coverage for important functionality
+
+Resolution Applied:
+
+1. IMPROVED TRANSPARENT IMPORT TEST
+   - Better error messages explaining what to do
+   - Checks for psutil_cygwin availability in development mode
+   - Distinguishes between "not installed" and "not configured"
+   - Provides clear instructions when transparent import isn't working
+
+2. ADDED MODERN INSTALLATION TESTS
+   - TestModernInstallationIntegration: Tests modern setup script
+   - TestModernCygwinDetection: Tests Cygwin detection in modern architecture
+   - Replaces functionality of removed custom command tests
+
+3. DIAGNOSTIC TOOLING
+   - Created diagnose_issue_010.py to help debug transparent import issues
+   - Checks environment, .pth file status, and import behavior
+   - Provides step-by-step solutions
+
+Expected Behavior After Fix:
+
+ON CYGWIN (target platform):
+- If properly installed: 0 skips, all tests pass
+- If .pth not configured: Test provides helpful error message and setup instructions
+- Modern installation tests verify new architecture works
+
+ON NON-CYGWIN:
+- TestRealTransparentImport skipped (correct - requires /proc filesystem)
+- Other tests still run and pass (mocked functionality)
+
+Setup Instructions for Zero Skips:
+
+1. Install in development mode:
+   pip install -e .
+
+2. Configure transparent import:
+   psutil-cygwin-setup install
+
+3. Verify setup:
+   psutil-cygwin-check --transparent
+
+4. Run tests:
+   pytest tests/test_pth_functionality.py -v
+   Expected: 0 skipped, all passed
+
+Files Modified:
+- tests/test_pth_functionality.py: Improved test logic and added modern tests
+- dev/diagnose_issue_010.py: Created diagnostic tool
+
+Result:
+- Better test experience with actionable feedback
+- Tests that actually help users configure the system correctly  
+- Modern test coverage for new installation architecture
+- Zero skips when properly configured on Cygwin
+
+Status: RESOLVED
+- Test logic improved to provide better feedback
+- Modern installation tests added
+- Diagnostic tools created
+- Clear setup instructions provided

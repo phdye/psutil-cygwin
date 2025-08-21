@@ -1,0 +1,166 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "psutil-cygwin"
+version = "1.0.0"
+description = "A drop-in replacement for psutil that works on Cygwin environments (Cygwin only)"
+readme = "README.md"
+requires-python = ">=3.6"
+license = {file = "LICENSE"}
+authors = [
+    {name = "psutil-cygwin contributors"}
+]
+maintainers = [
+    {name = "psutil-cygwin contributors"}
+]
+keywords = [
+    "psutil",
+    "cygwin", 
+    "system",
+    "process",
+    "monitoring",
+    "windows",
+    "linux",
+    "proc",
+    "cross-platform"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Environment :: Console",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Hardware",
+    "Topic :: System :: Monitoring",
+    "Topic :: System :: Networking :: Monitoring",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Utilities"
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "pytest-cov>=2.0",
+    "black>=21.0",
+    "flake8>=3.8",
+    "mypy>=0.800",
+    "sphinx>=4.0",
+    "sphinx-rtd-theme>=1.0",
+    "pre-commit>=2.0"
+]
+test = [
+    "pytest>=6.0",
+    "pytest-cov>=2.0",
+    "pytest-mock>=3.0"
+]
+docs = [
+    "sphinx>=4.0",
+    "sphinx-rtd-theme>=1.0",
+    "sphinx-autodoc-typehints>=1.12"
+]
+
+[project.urls]
+Homepage = "https://github.com/your-username/psutil-cygwin"
+Documentation = "https://psutil-cygwin.readthedocs.io/"
+Repository = "https://github.com/your-username/psutil-cygwin.git"
+"Bug Tracker" = "https://github.com/your-username/psutil-cygwin/issues"
+Changelog = "https://github.com/your-username/psutil-cygwin/blob/main/CHANGELOG.md"
+
+[project.scripts]
+psutil-cygwin-monitor = "psutil_cygwin.examples.system_monitor:main"
+psutil-cygwin-proc = "psutil_cygwin.examples.process_manager:main"
+psutil-cygwin-check = "psutil_cygwin.cygwin_check:main"
+psutil-cygwin-setup = "psutil_cygwin._build.setup_script:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["psutil_cygwin*"]
+exclude = ["tests*", "dev*", "docs*"]
+
+[tool.setuptools.package-data]
+psutil_cygwin = ["py.typed"]
+
+# Modern PEP 517/518 build system - no more setup.py commands needed!
+# Installation is handled through entry points and post-install hooks.
+
+[tool.black]
+line-length = 88
+target-version = ['py36']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.mypy]
+python_version = "3.6"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q --strict-markers --strict-config"
+testpaths = [
+    "tests",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests"
+]
+# No warning filters needed - we've eliminated the root causes!
+
+[tool.coverage.run]
+source = ["psutil_cygwin"]
+omit = [
+    "*/tests/*",
+    "*/examples/*",
+    "*/_build/*"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]

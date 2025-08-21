@@ -1,0 +1,13 @@
+Script started on 2025-08-21 03:51:44-04:00 [COMMAND="set -x && pytest tests/" TERM="screen.xterm-256color" TTY="/dev/pty6" COLUMNS="121" LINES="40"]
++ pytest tests/
+================================================== test session starts ==================================================
+platform cygwin -- Python 3.9.16, pytest-8.3.3, pluggy-1.5.0
+rootdir: /home/phdyex/my-repos/erradd
+configfile: pyproject.toml
+plugins: anyio-4.6.2.post1, cov-6.2.1, subprocess-1.5.2
+collecting ... 
+collected 7 items                                                                                                       
+tests/test_erradd.py .......                                                                                      [100%]
+=================================================== 7 passed in 0.98s ===================================================
+Script done on 2025-08-21 03:51:46-04:00 [COMMAND_EXIT_CODE="0"]
+

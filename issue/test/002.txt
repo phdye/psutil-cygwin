@@ -1,0 +1,5 @@
+Script started on 2025-08-21 03:41:41-04:00 [COMMAND="set -x && pytest tests/" TERM="screen.xterm-256color" TTY="/dev/pty5" COLUMNS="121" LINES="40"]
++ pytest tests/
+ERROR: /home/phdyex/my-repos/psutil-cygwin/pyproject.toml: Expected newline or end of document after a statement (at line 1, column 15)
+Script done on 2025-08-21 03:41:41-04:00 [COMMAND_EXIT_CODE="4"]
+

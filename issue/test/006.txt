@@ -1,0 +1,227 @@
+Script started on 2025-08-21 03:57:15-04:00 [COMMAND="set -x && pytest tests/" TERM="screen.xterm-256color" TTY="/dev/pty5" COLUMNS="121" LINES="40"]
++ pytest tests/
+...F....F.F....F................sFFF........F........F..                                                          [100%]
+======================================================= FAILURES ========================================================
+_______________________________________ TestSystemIntegration.test_disk_functions _______________________________________
+self = <tests.test_integration.TestSystemIntegration testMethod=test_disk_functions>
+    def test_disk_functions(self):
+        """Test disk-related functions with real data."""
+        # Disk partitions
+        partitions = psutil.disk_partitions()
+        self.assertIsInstance(partitions, list)
+        self.assertGreater(len(partitions), 0)
+    
+        # Check root partition exists
+        root_parts = [p for p in partitions if p.mountpoint == "/"]
+        self.assertGreater(len(root_parts), 0)
+    
+        # Disk usage for root
+>       usage = psutil.disk_usage("/")
+tests/test_integration.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+path = '/'
+    def disk_usage(path: str) -> DiskUsage:
+        """Get disk usage statistics for a path"""
+        try:
+            statvfs = os.statvfs(path)
+            total = statvfs.f_frsize * statvfs.f_blocks
+>           free = statvfs.f_frsize * statvfs.f_available
+E           AttributeError: 'os.statvfs_result' object has no attribute 'f_available'
+psutil_cygwin/core.py:421: AttributeError
+______________________________________ TestProcessIntegration.test_process_errors _______________________________________
+self = <tests.test_integration.TestProcessIntegration testMethod=test_process_errors>
+    def test_process_errors(self):
+        """Test process error conditions."""
+        # Test non-existent process
+        with self.assertRaises(psutil.NoSuchProcess):
+            psutil.Process(99999)
+    
+        # Test accessing process that might deny access
+        try:
+            # Try to access init process (might be restricted)
+>           proc = psutil.Process(1)
+tests/test_integration.py:234: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+self = <psutil_cygwin.core.Process object at 0x6ffffe82e2e0>, pid = 1
+    def __init__(self, pid: int):
+        self.pid = pid
+        self._proc_path = f"/proc/{pid}"
+        if not os.path.exists(self._proc_path):
+>           raise NoSuchProcess(pid=pid)
+E           psutil_cygwin.core.NoSuchProcess: Process 1 not found
+psutil_cygwin/core.py:80: NoSuchProcess
+______________________________________ TestProcessIntegration.test_process_listing ______________________________________
+self = <tests.test_integration.TestProcessIntegration testMethod=test_process_listing>
+    def test_process_listing(self):
+        """Test process listing functions."""
+        # Get all PIDs
+        pids = psutil.pids()
+        self.assertIsInstance(pids, list)
+        self.assertGreater(len(pids), 0)
+>       self.assertIn(1, pids)  # init process should exist
+E       AssertionError: 1 not found in [741, 742, 743, 744, 776, 870, 871, 873, 874, 875, 876, 877, 878, 879, 1104, 1130, 1138, 4116, 4117, 4118]
+tests/test_integration.py:134: AssertionError
+________________________________ TestRealWorldScenarios.test_system_monitoring_scenario _________________________________
+self = <tests.test_integration.TestRealWorldScenarios testMethod=test_system_monitoring_scenario>
+    def test_system_monitoring_scenario(self):
+        """Test a typical system monitoring scenario."""
+        # Get system overview
+        cpu_pct = psutil.cpu_percent(interval=0.5)
+        mem = psutil.virtual_memory()
+>       disk = psutil.disk_usage("/")
+tests/test_integration.py:293: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+path = '/'
+    def disk_usage(path: str) -> DiskUsage:
+        """Get disk usage statistics for a path"""
+        try:
+            statvfs = os.statvfs(path)
+            total = statvfs.f_frsize * statvfs.f_blocks
+>           free = statvfs.f_frsize * statvfs.f_available
+E           AttributeError: 'os.statvfs_result' object has no attribute 'f_available'
+psutil_cygwin/core.py:421: AttributeError
+______________________ TestInstallationIntegration.test_cygwin_install_command_calls_pth_creation _______________________
+self = <tests.test_pth_functionality.TestInstallationIntegration testMethod=test_cygwin_install_command_calls_pth_creation>
+mock_create_pth = <MagicMock name='create_psutil_pth' id='123145276851152'>
+mock_is_cygwin = <MagicMock name='is_cygwin' id='123145276359152'>
+    @patch('setup.is_cygwin')
+    @patch('setup.create_psutil_pth')
+    def test_cygwin_install_command_calls_pth_creation(self, mock_create_pth, mock_is_cygwin):
+        """Test that CygwinInstallCommand calls create_psutil_pth."""
+        from setup import CygwinInstallCommand
+    
+        mock_is_cygwin.return_value = True
+        mock_create_pth.return_value = '/site-packages/psutil.pth'
+    
+        # Create mock install command
+>       cmd = CygwinInstallCommand(None)
+tests/test_pth_functionality.py:342: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+/usr/lib/python3.9/site-packages/setuptools/__init__.py:175: in __init__
+    super().__init__(dist)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+self = <setup.CygwinInstallCommand object at 0x6ffffe7b8040>, dist = None
+    def __init__(self, dist):
+        """Create and initialize a new Command object.  Most importantly,
+        invokes the 'initialize_options()' method, which is the real
+        initializer and depends on the actual command being
+        instantiated.
+        """
+        # late import because of mutual dependence between these classes
+        from distutils.dist import Distribution
+    
+        if not isinstance(dist, Distribution):
+>           raise TypeError("dist must be a Distribution instance")
+E           TypeError: dist must be a Distribution instance
+/usr/lib/python3.9/site-packages/setuptools/_distutils/cmd.py:74: TypeError
+______________________ TestInstallationIntegration.test_cygwin_uninstall_command_calls_pth_removal ______________________
+self = <tests.test_pth_functionality.TestInstallationIntegration testMethod=test_cygwin_uninstall_command_calls_pth_removal>
+mock_remove_pth = <MagicMock name='remove_psutil_pth' id='123145277347920'>
+mock_is_cygwin = <MagicMock name='is_cygwin' id='123145276611312'>
+    @patch('setup.is_cygwin')
+    @patch('setup.remove_psutil_pth')
+    def test_cygwin_uninstall_command_calls_pth_removal(self, mock_remove_pth, mock_is_cygwin):
+        """Test that uninstall process calls remove_psutil_pth."""
+        from setup import CygwinUninstallCommand
+    
+        mock_is_cygwin.return_value = True
+    
+        # Create mock uninstall command
+>       cmd = CygwinUninstallCommand(None)
+tests/test_pth_functionality.py:360: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+/usr/lib/python3.9/site-packages/setuptools/__init__.py:175: in __init__
+    super().__init__(dist)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+self = <setup.CygwinUninstallCommand object at 0x6ffffe831b50>, dist = None
+    def __init__(self, dist):
+        """Create and initialize a new Command object.  Most importantly,
+        invokes the 'initialize_options()' method, which is the real
+        initializer and depends on the actual command being
+        instantiated.
+        """
+        # late import because of mutual dependence between these classes
+        from distutils.dist import Distribution
+    
+        if not isinstance(dist, Distribution):
+>           raise TypeError("dist must be a Distribution instance")
+E           TypeError: dist must be a Distribution instance
+/usr/lib/python3.9/site-packages/setuptools/_distutils/cmd.py:74: TypeError
+_____________________________________ TestCygwinDetection.test_is_cygwin_detection ______________________________________
+self = <tests.test_pth_functionality.TestCygwinDetection testMethod=test_is_cygwin_detection>
+mock_exists = <MagicMock name='exists' id='123145277108528'>
+mock_system = <MagicMock name='system' id='123145277052528'>
+    @patch('platform.system')
+    @patch('os.path.exists')
+    def test_is_cygwin_detection(self, mock_exists, mock_system):
+        """Test various Cygwin detection scenarios."""
+        # Test positive detection
+        mock_system.return_value = 'CYGWIN_NT-10.0'
+        self.assertTrue(is_cygwin())
+    
+        # Test negative detection
+        mock_system.return_value = 'Windows'
+        mock_exists.return_value = False
+>       self.assertFalse(is_cygwin())
+E       AssertionError: True is not false
+tests/test_pth_functionality.py:384: AssertionError
+_________________________________________ TestProcessClass.test_process_cmdline _________________________________________
+self = <tests.test_unit.TestProcessClass testMethod=test_process_cmdline>
+mock_file = <MagicMock name='open' spec='builtin_function_or_method' id='123145276023424'>
+mock_exists = <MagicMock name='exists' id='123145275938032'>
+    @patch('os.path.exists', return_value=True)
+    @patch('builtins.open', new_callable=mock_open,
+           read_data="arg1\\x00arg2\\x00arg3\\x00")
+    def test_process_cmdline(self, mock_file, mock_exists):
+        """Test process command line parsing."""
+        proc = psutil.Process(self.test_pid)
+        cmdline = proc.cmdline()
+>       self.assertEqual(cmdline, ["arg1", "arg2", "arg3"])
+E       AssertionError: Lists differ: ['arg1\\x00arg2\\x00arg3\\x00'] != ['arg1', 'arg2', 'arg3']
+E       
+E       First differing element 0:
+E       'arg1\\x00arg2\\x00arg3\\x00'
+E       'arg1'
+E       
+E       Second list contains 2 additional elements.
+E       First extra element 1:
+E       'arg2'
+E       
+E       - ['arg1\\x00arg2\\x00arg3\\x00']
+E       + ['arg1', 'arg2', 'arg3']
+tests/test_unit.py:131: AssertionError
+_____________________________________ TestErrorHandling.test_access_denied_handling _____________________________________
+self = <tests.test_unit.TestErrorHandling testMethod=test_access_denied_handling>
+mock_exists = <MagicMock name='exists' id='123145276533920'>, mock_open = <MagicMock name='open' id='123145276782768'>
+    @patch('builtins.open', side_effect=PermissionError("Access denied"))
+    @patch('os.path.exists', return_value=True)
+    def test_access_denied_handling(self, mock_exists, mock_open):
+        """Test handling of permission errors."""
+        proc = psutil.Process(1)
+        with self.assertRaises(psutil.AccessDenied):
+>           proc.name()
+E           AssertionError: AccessDenied not raised
+tests/test_unit.py:220: AssertionError
+=================================================== warnings summary ====================================================
+../../../../usr/lib/python3.9/site-packages/setuptools/command/easy_install.py:41
+  /usr/lib/python3.9/site-packages/setuptools/command/easy_install.py:41: DeprecationWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html
+    import pkg_resources
+../../../../usr/lib/python3.9/site-packages/pkg_resources/__init__.py:3142
+  /usr/lib/python3.9/site-packages/pkg_resources/__init__.py:3142: DeprecationWarning: Deprecated call to `pkg_resources.declare_namespace('sphinxcontrib')`.
+  Implementing implicit namespace packages (as specified in PEP 420) is preferred to `pkg_resources.declare_namespace`. See https://setuptools.pypa.io/en/latest/references/keywords.html#keyword-namespace-packages
+    declare_namespace(pkg)
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================================ short test summary info ================================================
+SKIPPED [1] tests/test_pth_functionality.py:297: psutil not available (may not be installed)
+FAILED tests/test_integration.py::TestSystemIntegration::test_disk_functions - AttributeError: 'os.statvfs_result' object has no attribute 'f_available'
+FAILED tests/test_integration.py::TestProcessIntegration::test_process_errors - psutil_cygwin.core.NoSuchProcess: Process 1 not found
+FAILED tests/test_integration.py::TestProcessIntegration::test_process_listing - AssertionError: 1 not found in [741, 742, 743, 744, 776, 870, 871, 873, 874, 875, 876, 877, 878, 879, 1104, 1130, 11...
+FAILED tests/test_integration.py::TestRealWorldScenarios::test_system_monitoring_scenario - AttributeError: 'os.statvfs_result' object has no attribute 'f_available'
+FAILED tests/test_pth_functionality.py::TestInstallationIntegration::test_cygwin_install_command_calls_pth_creation - TypeError: dist must be a Distribution instance
+FAILED tests/test_pth_functionality.py::TestInstallationIntegration::test_cygwin_uninstall_command_calls_pth_removal - TypeError: dist must be a Distribution instance
+FAILED tests/test_pth_functionality.py::TestCygwinDetection::test_is_cygwin_detection - AssertionError: True is not false
+FAILED tests/test_unit.py::TestProcessClass::test_process_cmdline - AssertionError: Lists differ: ['arg1\\x00arg2\\x00arg3\\x00'] != ['arg1', 'arg2', 'arg3']
+FAILED tests/test_unit.py::TestErrorHandling::test_access_denied_handling - AssertionError: AccessDenied not raised
+9 failed, 46 passed, 1 skipped, 2 warnings in 7.66s
+Script done on 2025-08-21 03:57:23-04:00 [COMMAND_EXIT_CODE="1"]
+

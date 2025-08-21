@@ -1,0 +1,32 @@
+Script started on 2025-08-21 04:05:40-04:00 [COMMAND="set -x && pytest tests/" TERM="screen.xterm-256color" TTY="/dev/pty5" COLUMNS="121" LINES="40"]
++ pytest tests/
+................................s.......................                                                          [100%]
+=================================================== warnings summary ====================================================
+../../../../usr/lib/python3.9/site-packages/setuptools/command/easy_install.py:41
+  /usr/lib/python3.9/site-packages/setuptools/command/easy_install.py:41: DeprecationWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html
+    import pkg_resources
+../../../../usr/lib/python3.9/site-packages/pkg_resources/__init__.py:3142
+  /usr/lib/python3.9/site-packages/pkg_resources/__init__.py:3142: DeprecationWarning: Deprecated call to `pkg_resources.declare_namespace('sphinxcontrib')`.
+  Implementing implicit namespace packages (as specified in PEP 420) is preferred to `pkg_resources.declare_namespace`. See https://setuptools.pypa.io/en/latest/references/keywords.html#keyword-namespace-packages
+    declare_namespace(pkg)
+tests/test_pth_functionality.py::TestInstallationIntegration::test_cygwin_install_command_calls_pth_creation
+tests/test_pth_functionality.py::TestInstallationIntegration::test_cygwin_uninstall_command_calls_pth_removal
+  /usr/lib/python3.9/site-packages/setuptools/_distutils/cmd.py:79: SetuptoolsDeprecationWarning: setup.py install is deprecated.
+  !!
+  
+          ********************************************************************************
+          Please avoid running ``setup.py`` directly.
+          Instead, use pypa/build, pypa/installer or other
+          standards-based tools.
+  
+          See https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html for details.
+          ********************************************************************************
+  
+  !!
+    self.initialize_options()
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================================ short test summary info ================================================
+SKIPPED [1] tests/test_pth_functionality.py:297: psutil not available (may not be installed)
+55 passed, 1 skipped, 4 warnings in 7.66s
+Script done on 2025-08-21 04:05:48-04:00 [COMMAND_EXIT_CODE="0"]
+

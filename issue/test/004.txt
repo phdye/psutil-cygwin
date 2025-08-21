@@ -1,0 +1,18 @@
+Script started on 2025-08-21 03:48:15-04:00 [COMMAND="set -x && pytest tests/" TERM="screen.xterm-256color" TTY="/dev/pty5" COLUMNS="121" LINES="40"]
++ pytest tests/
+======================================================== ERRORS =========================================================
+___________________________________ ERROR collecting tests/test_pth_functionality.py ____________________________________
+ImportError while importing test module '/home/phdyex/my-repos/psutil-cygwin/tests/test_pth_functionality.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.9/importlib/__init__.py:127: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_pth_functionality.py:21: in <module>
+    from setup import create_psutil_pth, remove_psutil_pth, is_cygwin
+E   ImportError: cannot import name 'create_psutil_pth' from 'setup' (/home/phdyex/my-repos/psutil-cygwin/setup.py)
+================================================ short test summary info ================================================
+ERROR tests/test_pth_functionality.py
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 error in 0.34s
+Script done on 2025-08-21 03:48:17-04:00 [COMMAND_EXIT_CODE="2"]
+
