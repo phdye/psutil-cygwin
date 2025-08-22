@@ -13,6 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import psutil_cygwin as psutil
+from psutil_cygwin import core  # Import core module for patching
 
 
 class TestExceptions(unittest.TestCase):
@@ -71,11 +72,20 @@ class TestSystemFunctions(unittest.TestCase):
         
     @patch('builtins.open', new_callable=mock_open,
            read_data="processor : 0\nprocessor : 1\n")
-    @patch('psutil_cygwin.core._is_mocking_active', return_value=True)
-    def test_cpu_count(self, mock_is_mocking, mock_file):
+    def test_cpu_count(self, mock_file):
         """Test CPU count parsing."""
-        count = psutil.cpu_count()
-        self.assertEqual(count, 2)
+        # Clear both caches to ensure fresh test
+        if hasattr(psutil.cpu_count, '_cached_count'):
+            delattr(psutil.cpu_count, '_cached_count')
+        
+        # Clear mocking cache and force cache bypass
+        if hasattr(core, '_clear_mocking_cache'):
+            core._clear_mocking_cache()
+        
+        # Temporarily patch the cache function to return True (force cache bypass)
+        with patch.object(core, '_is_mocking_cached', return_value=True):
+            count = psutil.cpu_count()
+            self.assertEqual(count, 2)
         
     @patch('os.listdir')
     def test_pids(self, mock_listdir):

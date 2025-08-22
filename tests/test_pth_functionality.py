@@ -11,6 +11,7 @@ import site
 import tempfile
 import unittest
 import subprocess
+import shutil
 from pathlib import Path
 from unittest.mock import patch, mock_open, MagicMock
 
@@ -34,7 +35,9 @@ class TestPthFileCreation(unittest.TestCase):
         """Clean up test environment."""
         if os.path.exists(self.pth_file):
             os.remove(self.pth_file)
-        os.rmdir(self.temp_dir)
+        # Use shutil.rmtree instead of os.rmdir for directories with contents
+        if os.path.exists(self.temp_dir):
+            shutil.rmtree(self.temp_dir)
         
     @patch('site.getsitepackages')
     @patch('os.path.exists')
