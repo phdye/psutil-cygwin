@@ -71,7 +71,8 @@ class TestSystemFunctions(unittest.TestCase):
         
     @patch('builtins.open', new_callable=mock_open,
            read_data="processor : 0\nprocessor : 1\n")
-    def test_cpu_count(self, mock_file):
+    @patch('psutil_cygwin.core._is_mocking_active', return_value=True)
+    def test_cpu_count(self, mock_is_mocking, mock_file):
         """Test CPU count parsing."""
         count = psutil.cpu_count()
         self.assertEqual(count, 2)

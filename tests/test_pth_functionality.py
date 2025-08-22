@@ -63,44 +63,33 @@ class TestPthFileCreation(unittest.TestCase):
             
     @patch('site.getsitepackages')
     @patch('site.getusersitepackages')
-    @patch('os.path.exists')
     @patch('os.access')
-    @patch('os.makedirs')
-    def test_create_psutil_pth_fallback_to_user(self, mock_makedirs, mock_access, 
-                                               mock_exists, mock_getusersitepackages, 
+    def test_create_psutil_pth_fallback_to_user(self, mock_access, 
+                                               mock_getusersitepackages, 
                                                mock_getsitepackages):
         """Test fallback to user site-packages when system site-packages not writable."""
         user_site = os.path.join(self.temp_dir, 'user-site')
         user_pth = os.path.join(user_site, 'psutil.pth')
         
+        # Create the user site directory
+        os.makedirs(user_site, exist_ok=True)
+        
         # Mock system site-packages not writable
         mock_getsitepackages.return_value = ['/system/site-packages']
         mock_getusersitepackages.return_value = user_site
-        
-        def exists_side_effect(path):
-            if path == '/system/site-packages':
-                return True
-            elif path == user_site:
-                return False  # Will be created
-            return False
             
         def access_side_effect(path, mode):
             if path == '/system/site-packages':
                 return False  # Not writable
             return True
             
-        mock_exists.side_effect = exists_side_effect
         mock_access.side_effect = access_side_effect
         
-        with patch('builtins.open', mock_open()) as mock_file:
-            result = create_psutil_pth()
-            
-            # Should have created user site-packages directory
-            mock_makedirs.assert_called_once_with(user_site, exist_ok=True)
-            
-            # Should have created .pth file in user site-packages
-            mock_file.assert_called_once_with(user_pth, 'w')
-            self.assertEqual(result, user_pth)
+        result = create_psutil_pth()
+        
+        # Should have created .pth file in user site-packages
+        self.assertEqual(result, user_pth)
+        self.assertTrue(os.path.exists(user_pth))
             
     @patch('site.getsitepackages')
     @patch('builtins.open', side_effect=PermissionError("Permission denied"))

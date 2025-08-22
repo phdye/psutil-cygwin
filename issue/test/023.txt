@@ -1,0 +1,101 @@
+Script started on 2025-08-22 01:09:24-04:00 [COMMAND="set -x && pytest tests" TERM="screen.xterm-256color" TTY="/dev/pty5" COLUMNS="121" LINES="40"]
++ pytest tests
+......................................F....................F......F.....................                          [100%]
+======================================================= FAILURES ========================================================
+______________________________ TestPthFileCreation.test_create_psutil_pth_fallback_to_user ______________________________
+self = <tests.test_pth_functionality.TestPthFileCreation testMethod=test_create_psutil_pth_fallback_to_user>
+    def tearDown(self):
+        """Clean up test environment."""
+        if os.path.exists(self.pth_file):
+            os.remove(self.pth_file)
+>       os.rmdir(self.temp_dir)
+E       OSError: [Errno 90] Directory not empty: '/tmp/tmpaw6pwada'
+tests/test_pth_functionality.py:37: OSError
+------------------------------------------------- Captured stdout call --------------------------------------------------
+✅ Created psutil.pth: /tmp/tmpaw6pwada/user-site/psutil.pth
+📦 'import psutil' will now use psutil_cygwin transparently
+_______________________ TestErrorRecoveryAndRobustness.test_corrupted_proc_filesystem_simulation ________________________
+self = <tests.test_stress.TestErrorRecoveryAndRobustness testMethod=test_corrupted_proc_filesystem_simulation>
+    def test_corrupted_proc_filesystem_simulation(self):
+        """Test behavior with simulated corrupted /proc files."""
+        corrupted_scenarios = [
+            # Binary data
+            (b'\x00\x01\x02\x03\x04\x05', "binary data"),
+            # Truncated files
+            ("cpu  100 2", "truncated"),
+            # Random text
+            ("".join(random.choices(string.ascii_letters, k=1000)), "random text"),
+            # Very long lines
+            ("cpu  " + " ".join(str(random.randint(0, 999999)) for _ in range(1000)), "very long"),
+            # Mixed encodings (Latin-1)
+            ("cpu  100 200 300 \xff\xfe\xfd", "mixed encoding"),
+        ]
+    
+        for corrupted_data, description in corrupted_scenarios:
+            with self.subTest(scenario=description):
+                with patch('builtins.open', mock_open(read_data=corrupted_data)):
+                    try:
+                        # Functions should not crash on corrupted data
+                        times = psutil.cpu_times()
+                        mem = psutil.virtual_memory()
+>                       count = psutil.cpu_count()
+tests/test_stress.py:355: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+logical = True
+    def cpu_count(logical: bool = True) -> int:
+        """Get number of CPUs"""
+        # Cache the result since CPU count doesn't change
+        # Allow cache bypass for testing by checking if mocking is active
+        cache_key = '_cached_count'
+    
+        # Check if we should bypass cache (for testing)
+        if not hasattr(cpu_count, cache_key) or _is_mocking_active():
+            try:
+                # Try faster method first - check /proc/cpuinfo more efficiently
+                with open('/proc/cpuinfo', 'r') as f:
+                    count = 0
+                    for line in f:
+>                       if line.startswith('processor'):
+E                       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+psutil_cygwin/core.py:423: TypeError
+__________________________________________ TestSystemFunctions.test_cpu_count ___________________________________________
+thing = <module 'psutil_cygwin' from '/home/phdyex/my-repos/psutil-cygwin/psutil_cygwin/__init__.py'>, comp = 'core'
+import_path = 'psutil_cygwin.core'
+    def _dot_lookup(thing, comp, import_path):
+        try:
+>           return getattr(thing, comp)
+E           AttributeError: module 'psutil_cygwin' has no attribute 'core'
+/usr/lib/python3.9/unittest/mock.py:1226: AttributeError
+During handling of the above exception, another exception occurred:
+/usr/lib/python3.9/unittest/mock.py:1333: in patched
+    with self.decoration_helper(patched,
+/usr/lib/python3.9/contextlib.py:119: in __enter__
+    return next(self.gen)
+/usr/lib/python3.9/unittest/mock.py:1315: in decoration_helper
+    arg = exit_stack.enter_context(patching)
+/usr/lib/python3.9/contextlib.py:448: in enter_context
+    result = _cm_type.__enter__(cm)
+/usr/lib/python3.9/unittest/mock.py:1388: in __enter__
+    self.target = self.getter()
+/usr/lib/python3.9/unittest/mock.py:1563: in <lambda>
+    getter = lambda: _importer(target)
+/usr/lib/python3.9/unittest/mock.py:1239: in _importer
+    thing = _dot_lookup(thing, comp, import_path)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+thing = <module 'psutil_cygwin' from '/home/phdyex/my-repos/psutil-cygwin/psutil_cygwin/__init__.py'>, comp = 'core'
+import_path = 'psutil_cygwin.core'
+    def _dot_lookup(thing, comp, import_path):
+        try:
+            return getattr(thing, comp)
+        except AttributeError:
+            __import__(import_path)
+>           return getattr(thing, comp)
+E           AttributeError: module 'psutil_cygwin' has no attribute 'core'
+/usr/lib/python3.9/unittest/mock.py:1229: AttributeError
+================================================ short test summary info ================================================
+FAILED tests/test_pth_functionality.py::TestPthFileCreation::test_create_psutil_pth_fallback_to_user - OSError: [Errno 90] Directory not empty: '/tmp/tmpaw6pwada'
+FAILED tests/test_stress.py::TestErrorRecoveryAndRobustness::test_corrupted_proc_filesystem_simulation - TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+FAILED tests/test_unit.py::TestSystemFunctions::test_cpu_count - AttributeError: module 'psutil_cygwin' has no attribute 'core'
+3 failed, 85 passed in 47.56s
+Script done on 2025-08-22 01:10:13-04:00 [COMMAND_EXIT_CODE="1"]
+

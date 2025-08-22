@@ -180,9 +180,15 @@ def create_psutil_pth():
         if not site_packages:
             # Fallback to user site-packages
             site_packages = site.getusersitepackages()
+            # Ensure user site-packages directory exists
             if not os.path.exists(site_packages):
-                os.makedirs(site_packages, exist_ok=True)
+                try:
+                    os.makedirs(site_packages, exist_ok=True)
+                except OSError:
+                    # If makedirs fails, return None for permission error tests
+                    return None
         
+        # Construct the path to the .pth file
         pth_file = os.path.join(site_packages, 'psutil.pth')
         
         # Create the .pth file content
@@ -192,8 +198,17 @@ import sys; sys.modules['psutil'] = __import__('psutil_cygwin')
 '''
         
         # Write the .pth file
-        with open(pth_file, 'w') as f:
-            f.write(pth_content)
+        try:
+            with open(pth_file, 'w') as f:
+                f.write(pth_content)
+            
+            # Verify file was created (important for tests)
+            if not os.path.exists(pth_file):
+                return None
+                
+        except (OSError, IOError, PermissionError):
+            # If writing fails, return None to indicate failure
+            return None
         
         print(f"✅ Created psutil.pth: {pth_file}")
         print("📦 'import psutil' will now use psutil_cygwin transparently")

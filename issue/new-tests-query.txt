@@ -1,0 +1,4 @@
+$ PYTHONPATH=src err pytest tests/
++ pytest tests/
+.........................................................                                                         [100%]
+57 passed in 7.46s

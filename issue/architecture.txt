@@ -1,0 +1,1 @@
+Write docs/psutil-cygwin-architecture.md describing comprehensively how standard psutil has been implemented on Cygwin.
