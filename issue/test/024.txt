@@ -1,0 +1,79 @@
+Script started on 2025-08-22 05:36:36-04:00 [COMMAND="set -x && pytest tests" TERM="screen.xterm-256color" TTY="/dev/pty5" COLUMNS="121" LINES="40"]
++ pytest tests
+........................................................F.........F.....................                          [100%]
+======================================================= FAILURES ========================================================
+____________________________________ TestStressConditions.test_high_frequency_calls _____________________________________
+self = <tests.test_stress.TestStressConditions testMethod=test_high_frequency_calls>
+    def test_high_frequency_calls(self):
+        """Test high-frequency function calls."""
+        if not Path("/proc").exists():
+            self.skipTest("Requires /proc filesystem")
+    
+        # Test rapid-fire calls to various functions
+        test_functions = [
+            psutil.cpu_count,
+            psutil.boot_time,
+            lambda: psutil.virtual_memory().total,
+            lambda: len(psutil.pids()),
+        ]
+    
+        for func in test_functions:
+            with self.subTest(func=func.__name__ if hasattr(func, '__name__') else str(func)):
+                start_time = time.time()
+    
+                # Rapid calls
+                for _ in range(1000):
+                    try:
+                        result = func()
+                        self.assertIsNotNone(result)
+                    except Exception as e:
+                        self.fail(f"Function {func} failed on rapid call: {e}")
+    
+                end_time = time.time()
+    
+                # Should complete in reasonable time
+                total_time = end_time - start_time
+>               self.assertLess(total_time, 30.0,
+                               f"1000 calls to {func} took {total_time:.2f}s")
+E               AssertionError: 48.925846338272095 not less than 30.0 : 1000 calls to <function cpu_count at 0x6ffffefeb940> took 48.93s
+tests/test_stress.py:225: AssertionError
+__________________________________________ TestSystemFunctions.test_cpu_count ___________________________________________
+thing = <module 'psutil_cygwin' from '/home/phdyex/my-repos/psutil-cygwin/psutil_cygwin/__init__.py'>, comp = 'core'
+import_path = 'psutil_cygwin.core'
+    def _dot_lookup(thing, comp, import_path):
+        try:
+>           return getattr(thing, comp)
+E           AttributeError: module 'psutil_cygwin' has no attribute 'core'
+/usr/lib/python3.9/unittest/mock.py:1226: AttributeError
+During handling of the above exception, another exception occurred:
+/usr/lib/python3.9/unittest/mock.py:1333: in patched
+    with self.decoration_helper(patched,
+/usr/lib/python3.9/contextlib.py:119: in __enter__
+    return next(self.gen)
+/usr/lib/python3.9/unittest/mock.py:1315: in decoration_helper
+    arg = exit_stack.enter_context(patching)
+/usr/lib/python3.9/contextlib.py:448: in enter_context
+    result = _cm_type.__enter__(cm)
+/usr/lib/python3.9/unittest/mock.py:1388: in __enter__
+    self.target = self.getter()
+/usr/lib/python3.9/unittest/mock.py:1563: in <lambda>
+    getter = lambda: _importer(target)
+/usr/lib/python3.9/unittest/mock.py:1239: in _importer
+    thing = _dot_lookup(thing, comp, import_path)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+thing = <module 'psutil_cygwin' from '/home/phdyex/my-repos/psutil-cygwin/psutil_cygwin/__init__.py'>, comp = 'core'
+import_path = 'psutil_cygwin.core'
+    def _dot_lookup(thing, comp, import_path):
+        try:
+            return getattr(thing, comp)
+        except AttributeError:
+            __import__(import_path)
+>           return getattr(thing, comp)
+E           AttributeError: module 'psutil_cygwin' has no attribute 'core'
+/usr/lib/python3.9/unittest/mock.py:1229: AttributeError
+================================================ short test summary info ================================================
+FAILED tests/test_stress.py::TestStressConditions::test_high_frequency_calls - AssertionError: 48.925846338272095 not less than 30.0 : 1000 calls to <function cpu_count at 0x6ffffefeb940> took 48...
+FAILED tests/test_unit.py::TestSystemFunctions::test_cpu_count - AttributeError: module 'psutil_cygwin' has no attribute 'core'
+2 failed, 86 passed in 94.02s (0:01:34)
+Script done on 2025-08-22 05:38:11-04:00 [COMMAND_EXIT_CODE="1"]
+
